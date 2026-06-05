@@ -6,3 +6,6 @@ __MACOSX/
 # tooling / agent
 .claude/
 *.log
+
+# background video (large, sourced locally — not in repo)
+assets/background.mp4
