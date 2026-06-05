@@ -1,0 +1,465 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>HomeCrowd | Find your people on match day</title>
+  <meta name="description" content="Free early access for the entire tournament, plus our insider guide to where your people watch, by neighborhood, before the first match." />
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="preconnect" href="https://flagcdn.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet" />
+
+  <style>
+    @font-face {
+      font-family: "Regarn";
+      src: url("assets/fonts/Regarn-Black.otf") format("opentype");
+      font-weight: 900;
+      font-display: swap;
+    }
+
+    :root {
+      --blue:        #2541E0;
+      --blue-bright: #5C7CFF;
+      --navy:        #0C1640;
+      --ink:         #060A1A;
+      --white:       #FFFFFF;
+      --accent:      #FFC23C;
+      --accent-text: #0C1640;
+
+      --flag-bg:   #EEF0F6;
+      --flagbar-h: 38px;
+      --brandbar-h: 84px;
+      --maxw: 1240px;
+
+      --ov: 0.90;          /* overlay darkness multiplier (tweakable) */
+      --flag-dur: 60s;     /* marquee duration (tweakable) */
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { height: 100%; }
+
+    body {
+      font-family: "Space Grotesk", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      color: var(--white);
+      background: var(--navy);
+      -webkit-font-smoothing: antialiased;
+      text-rendering: optimizeLegibility;
+    }
+
+    /* ===== Background layers ===== */
+    .bg-base { position: fixed; inset: 0; z-index: -3; background: linear-gradient(160deg, var(--blue) 0%, var(--navy) 70%); }
+    .bg-video {
+      position: fixed; inset: 0; z-index: -2; width: 100%; height: 100%;
+      object-fit: cover; transform: scale(1.08);
+      transition: transform 0.25s ease-out; will-change: transform;
+      filter: brightness(0.5) saturate(1.05);   /* darkened footage */
+    }
+    .bg-overlay {
+      position: fixed; inset: 0; z-index: -1;
+      background: linear-gradient(95deg,
+        rgba(7,11,26,var(--ov)) 0%,
+        rgba(7,11,26,calc(var(--ov) * 0.72)) 42%,
+        rgba(7,11,26,calc(var(--ov) * 0.20)) 100%);
+    }
+
+    /* ===== Top flag marquee ===== */
+    .flagbar {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 6; height: var(--flagbar-h);
+      display: flex; align-items: center; overflow: hidden;
+      background: var(--flag-bg); border-bottom: 1px solid rgba(12,22,64,0.10);
+    }
+    .flagbar::before, .flagbar::after { content: ""; position: absolute; top: 0; bottom: 0; width: 90px; z-index: 2; pointer-events: none; }
+    .flagbar::before { left: 0;  background: linear-gradient(90deg,  var(--flag-bg), rgba(238,240,246,0)); }
+    .flagbar::after  { right: 0; background: linear-gradient(270deg, var(--flag-bg), rgba(238,240,246,0)); }
+    .flagbar-track { display: flex; align-items: center; gap: 34px; white-space: nowrap; padding-left: 34px; will-change: transform; animation: scrollflags var(--flag-dur) linear infinite; }
+    .flagbar-track img { height: 17px; width: auto; display: block; border-radius: 2px; box-shadow: 0 0 0 1px rgba(12,22,64,0.12); opacity: 0.92; }
+    @keyframes scrollflags { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+
+    /* ===== White brand bar ===== */
+    .brandbar {
+      position: fixed; top: var(--flagbar-h); left: 0; right: 0; z-index: 6; height: var(--brandbar-h);
+      background: var(--white); border-bottom: 5px solid var(--blue);
+      display: flex; align-items: center;
+    }
+    .brandbar-inner { width: 100%; max-width: var(--maxw); height: 100%; margin: 0 auto; padding: 0 24px; display: flex; align-items: center; justify-content: center; }
+    .wordmark { font-family: "Regarn", "Space Grotesk", serif; font-weight: 900; font-size: clamp(1.8rem, 6.5vw, 2.2rem); letter-spacing: -0.005em; line-height: 1; color: var(--blue); }
+    .wordmark .wm-crowd { color: #4360EC; }
+
+    /* body hides flag bar */
+    body.no-flags { --flagbar-h: 0px; }
+    body.no-flags .flagbar { display: none; }
+
+    /* ===== Layout ===== */
+    .screen {
+      min-height: 100dvh; display: flex; align-items: center; justify-content: center;
+      padding: calc(var(--flagbar-h) + var(--brandbar-h) + 40px) 24px calc(40px + env(safe-area-inset-bottom));
+    }
+    .card { width: 100%; max-width: 520px; display: flex; flex-direction: column; gap: 26px; }
+
+    .hero { display: flex; flex-direction: column; gap: 20px; }
+    h1 { font-weight: 700; font-size: clamp(2.05rem, 8vw, 2.6rem); line-height: 1.06; letter-spacing: -0.022em; text-wrap: balance; }
+    .hl { color: var(--blue-bright); }
+    .subline { font-size: 1.04rem; line-height: 1.5; color: rgba(255,255,255,0.82); max-width: 42ch; }
+
+    .spots { display: inline-flex; align-items: center; gap: 11px; align-self: flex-start; padding: 9px 16px 9px 14px; border-radius: 999px; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.14); font-size: 0.92rem; color: rgba(255,255,255,0.85); }
+    .spots .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--accent); }
+    .spots b { font-variant-numeric: tabular-nums; font-weight: 700; color: var(--accent); font-size: 1.05rem; }
+
+    /* ===== Form card ===== */
+    .signup { background: #0E1635; border-radius: 16px; padding: 26px 24px 22px; box-shadow: 0 18px 44px rgba(0,0,0,0.5); }
+    form { display: flex; flex-direction: column; gap: 14px; }
+    .field-label { display: block; font-size: 0.86rem; font-weight: 600; color: rgba(255,255,255,0.9); margin-bottom: 7px; line-height: 1.3; }
+    .opt { color: rgba(255,255,255,0.5); font-weight: 500; }
+    .req { color: #FF7A7A; font-weight: 700; }
+
+    input[type="email"], input[type="tel"] {
+      width: 100%; height: 50px; padding: 0 15px; font-size: 1rem; font-family: inherit;
+      color: var(--navy); background: var(--white); border: 2px solid transparent; border-radius: 9px; outline: none;
+    }
+    input::placeholder { color: #9aa0ad; }
+    input:focus-visible { border-color: var(--blue-bright); box-shadow: 0 0 0 4px rgba(92,124,255,0.35); }
+    input.invalid { border-color: #FF7A7A; box-shadow: 0 0 0 4px rgba(255,122,122,0.22); }
+
+    .consent { font-size: 0.72rem; line-height: 1.4; color: rgba(255,255,255,0.55); margin-top: 6px; }
+    .error { font-size: 0.8rem; font-weight: 600; color: #FFD7D2; margin-top: 7px; min-height: 1.05em; }
+    .error:empty { min-height: 0; margin-top: 0; }
+
+    .hp { position: absolute; left: -9999px; width: 1px; height: 1px; overflow: hidden; }
+
+    button.cta {
+      width: 100%; min-height: 52px; padding: 14px 20px; margin-top: 2px;
+      font-family: "Space Grotesk", sans-serif; font-size: 1.08rem; font-weight: 700; letter-spacing: 0.01em;
+      color: var(--accent-text); background: var(--accent); border: none; border-radius: 9px; cursor: pointer;
+      box-shadow: inset 0 -2px 0 rgba(0,0,0,0.18); transition: transform 0.06s ease, filter 0.15s ease;
+    }
+    button.cta:hover { filter: brightness(1.04); }
+    button.cta:active { transform: scale(0.99); }
+    button.cta:focus-visible { outline: 3px solid var(--white); outline-offset: 3px; }
+    button.cta[disabled] { opacity: 0.75; cursor: progress; }
+
+    .microcopy { font-size: 0.78rem; line-height: 1.4; color: rgba(255,255,255,0.62); text-align: center; margin-top: 12px; }
+
+    .confirmation { display: none; flex-direction: column; gap: 10px; text-align: center; }
+    .confirmation.show { display: flex; }
+    .confirm-lead { font-family: "Regarn", "Space Grotesk", serif; font-weight: 900; font-size: 1.9rem; line-height: 1; color: var(--accent); }
+    .confirm-body { font-size: 1.04rem; line-height: 1.45; font-weight: 500; color: rgba(255,255,255,0.9); }
+    .is-hidden { display: none !important; }
+
+    /* ===== Desktop two-column ===== */
+    @media (min-width: 900px) {
+      .brandbar-inner { justify-content: flex-start; }
+      .wordmark { font-size: 2.2rem; padding-left: 0; }
+      .card { max-width: var(--maxw); flex-direction: row; align-items: center; gap: 60px; }
+      .hero { flex: 1 1 0; gap: 22px; }
+      h1 { font-size: clamp(2.6rem, 3.6vw, 3.35rem); }
+      .subline { font-size: 1.12rem; max-width: 40ch; }
+      .signup { flex: 0 0 420px; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .flagbar-track { animation: none; }
+      .bg-video { transition: none; }
+    }
+
+    /* ===== Tweaks panel ===== */
+    #tweaks { position: fixed; right: 18px; bottom: 18px; z-index: 50; width: 268px; display: none;
+      background: #0E1635; color: #fff; border: 1px solid rgba(255,255,255,0.14); border-radius: 14px;
+      box-shadow: 0 18px 48px rgba(0,0,0,0.5); font-family: "Space Grotesk", sans-serif; }
+    #tweaks.open { display: block; }
+    #tweaks .tw-head { display: flex; align-items: center; justify-content: space-between; padding: 12px 14px; border-bottom: 1px solid rgba(255,255,255,0.1); }
+    #tweaks .tw-title { font-size: 0.84rem; font-weight: 700; letter-spacing: 0.02em; }
+    #tweaks .tw-close { background: none; border: none; color: rgba(255,255,255,0.6); cursor: pointer; font-size: 1.1rem; line-height: 1; padding: 2px 4px; }
+    #tweaks .tw-body { padding: 12px 14px 16px; display: flex; flex-direction: column; gap: 14px; }
+    #tweaks .tw-row { display: flex; flex-direction: column; gap: 7px; }
+    #tweaks .tw-label { font-size: 0.74rem; font-weight: 600; color: rgba(255,255,255,0.7); display: flex; justify-content: space-between; }
+    #tweaks .tw-swatches { display: flex; gap: 8px; }
+    #tweaks .tw-sw { width: 26px; height: 26px; border-radius: 7px; cursor: pointer; border: 2px solid transparent; }
+    #tweaks .tw-sw.sel { border-color: #fff; }
+    #tweaks input[type="range"] { width: 100%; accent-color: var(--blue-bright); }
+    #tweaks input[type="text"] { width: 100%; height: 34px; padding: 0 10px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.18); background: #080C1C; color: #fff; font: inherit; font-size: 0.84rem; }
+    #tweaks .tw-toggle { display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 0.8rem; color: rgba(255,255,255,0.85); }
+  </style>
+</head>
+<body>
+  <div class="bg-base" aria-hidden="true"></div>
+  <video class="bg-video" aria-hidden="true" autoplay muted loop playsinline preload="auto">
+    <source src="assets/background.mp4" type="video/mp4" />
+  </video>
+  <div class="bg-overlay" aria-hidden="true"></div>
+
+  <div class="flagbar" aria-hidden="true"><div class="flagbar-track" id="flagtrack"></div></div>
+
+  <header class="brandbar">
+    <div class="brandbar-inner"><div class="wordmark" id="wordmark">Home<span class="wm-crowd">Crowd</span></div></div>
+  </header>
+
+  <main class="screen">
+    <div class="card">
+      <div class="hero">
+        <h1 id="headline">Find the best venue to watch every match. <span class="hl" id="headlineHl">See who&rsquo;s going.</span></h1>
+        <p class="subline">Free early access for the whole tournament, plus our insider guide to where your people watch, by neighborhood, before the first match.</p>
+        <span class="spots" aria-live="polite"><span class="dot"></span>Only <b id="spots">23</b> founding spots left</span>
+      </div>
+
+      <div class="signup">
+        <form id="signup" novalidate>
+          <div>
+            <label for="email" class="field-label">Your email <span class="req">*</span></label>
+            <input type="email" id="email" name="email" placeholder="you@email.com" autocomplete="email" inputmode="email" required />
+            <p class="error" id="error" role="alert" aria-live="polite"></p>
+          </div>
+          <div>
+            <label for="phone" class="field-label">Mobile <span class="opt">for a kickoff text (optional)</span></label>
+            <input type="tel" id="phone" name="phone" placeholder="(555) 012-3456" autocomplete="tel" inputmode="tel" />
+            <p class="consent">Match-day texts only. Reply STOP anytime.</p>
+          </div>
+          <div class="hp" aria-hidden="true">
+            <label for="company">Company</label>
+            <input type="text" id="company" name="company" tabindex="-1" autocomplete="off" />
+          </div>
+          <button type="submit" class="cta" id="submit">Claim founding access</button>
+          <p class="microcopy">Founding members get in free before we ever charge.</p>
+        </form>
+
+        <div class="confirmation" id="confirmation" role="status" aria-live="polite">
+          <p class="confirm-lead">You&rsquo;re in.</p>
+          <p class="confirm-body">Watch your inbox for the guide before the first match. Bring your spirit.</p>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- Tweaks panel -->
+  <aside id="tweaks" aria-hidden="true">
+    <div class="tw-head"><span class="tw-title">Tweaks</span><button class="tw-close" id="twClose" aria-label="Close">×</button></div>
+    <div class="tw-body">
+      <div class="tw-row">
+        <span class="tw-label">Accent color</span>
+        <div class="tw-swatches" id="twAccent"></div>
+      </div>
+      <div class="tw-row">
+        <span class="tw-label"><span>Crowd visibility</span><span id="twOvVal"></span></span>
+        <input type="range" id="twOverlay" min="0.4" max="0.98" step="0.02" />
+      </div>
+      <div class="tw-row">
+        <span class="tw-label"><span>Flag speed</span><span id="twSpeedVal"></span></span>
+        <input type="range" id="twSpeed" min="30" max="90" step="2" />
+      </div>
+      <div class="tw-row">
+        <label class="tw-toggle"><input type="checkbox" id="twFlags" /> Show flag ticker</label>
+      </div>
+      <div class="tw-row">
+        <span class="tw-label">Headline</span>
+        <input type="text" id="twHeadline" />
+      </div>
+      <div class="tw-row">
+        <span class="tw-label">Headline highlight</span>
+        <input type="text" id="twHeadlineHl" />
+      </div>
+    </div>
+  </aside>
+
+  <script>
+    // ============================================================
+    //  CONFIG  (paste your Google Apps Script /exec URL before launch)
+    // ============================================================
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbx5XKKgkf6EaxzMFBtaWUa9NtAWSrzMpN8r12YIAa8PmgRdgCIKDLBN7-XHbUkMQkNx/exec";
+    const SOURCE = "ig-launch";
+
+    // ---- Manufactured, cyclic scarcity counter (NOT tied to real signups) ----
+    const COUNTDOWN = {
+      EPOCH:       Date.UTC(2026, 5, 4, 12, 0, 0),
+      START_SPOTS: 37, MIN_SPOTS: 8,
+      CYCLE_MS:    45 * 60 * 1000,
+      POLL_MS:     8000
+    };
+
+    // ============================================================
+    //  TWEAKS  (host-editable defaults block)
+    // ============================================================
+    const TWEAKS = /*EDITMODE-BEGIN*/{
+      "accent": "#FFC23C",
+      "overlay": 0.88,
+      "flagSpeed": 80,
+      "showFlags": true,
+      "headline": "Find the best venue to watch every match.",
+      "headlineHighlight": "Together."
+    }/*EDITMODE-END*/;
+
+    const ACCENTS = ["#FFC23C", "#1FE3A0", "#FFFFFF", "#19B8FF"];
+    const root = document.documentElement;
+
+    function applyTweaks() {
+      root.style.setProperty("--accent", TWEAKS.accent);
+      root.style.setProperty("--accent-text", "#0C1640");
+      root.style.setProperty("--ov", String(TWEAKS.overlay));
+      root.style.setProperty("--flag-dur", TWEAKS.flagSpeed + "s");
+      document.body.classList.toggle("no-flags", !TWEAKS.showFlags);
+      document.getElementById("headline").childNodes[0].nodeValue = TWEAKS.headline + " ";
+      document.getElementById("headlineHl").textContent = TWEAKS.headlineHighlight;
+    }
+
+    function setTweak(key, val) {
+      TWEAKS[key] = val;
+      applyTweaks();
+      window.parent.postMessage({ type: "__edit_mode_set_keys", edits: { [key]: val } }, "*");
+    }
+
+    // ============================================================
+    //  FLAG MARQUEE
+    // ============================================================
+    const FLAGS = ["us","mx","ca","ar","br","fr","gb","es","pt","de","nl","it","hr","be","ma","sn","jp","kr","au","co"];
+    (function buildFlags() {
+      const track = document.getElementById("flagtrack");
+      const add = () => FLAGS.forEach(code => {
+        const img = document.createElement("img");
+        img.src = "https://flagcdn.com/h40/" + code + ".png";
+        img.alt = ""; img.decoding = "async";
+        track.appendChild(img);
+      });
+      add(); add();
+    })();
+
+    // ============================================================
+    //  BACKGROUND VIDEO (force autoplay across browsers)
+    // ============================================================
+    (function playVideo() {
+      const v = document.querySelector(".bg-video");
+      if (!v) return;
+      v.muted = true;
+      const p = v.play();
+      if (p && p.catch) p.catch(() => {});
+    })();
+
+    // ============================================================
+    //  BACKGROUND PARALLAX (desktop pointers only)
+    // ============================================================
+    (function parallax() {
+      const v = document.querySelector(".bg-video");
+      const fine = window.matchMedia("(hover: hover) and (pointer: fine)").matches;
+      const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+      if (!fine || reduce) return;
+      let raf = 0, tx = 0, ty = 0; const S = 20;
+      window.addEventListener("mousemove", e => {
+        tx = -(e.clientX / innerWidth - 0.5) * S;
+        ty = -(e.clientY / innerHeight - 0.5) * S;
+        if (!raf) raf = requestAnimationFrame(() => { raf = 0; v.style.transform = "scale(1.08) translate(" + tx.toFixed(1) + "px," + ty.toFixed(1) + "px)"; });
+      });
+    })();
+
+    // ============================================================
+    //  COUNTER
+    // ============================================================
+    function currentSpots() {
+      let pos = (Date.now() - COUNTDOWN.EPOCH) % COUNTDOWN.CYCLE_MS;
+      if (pos < 0) pos += COUNTDOWN.CYCLE_MS;
+      const frac = pos / COUNTDOWN.CYCLE_MS;
+      const span = COUNTDOWN.START_SPOTS - COUNTDOWN.MIN_SPOTS;
+      const val = Math.round(COUNTDOWN.START_SPOTS - span * frac);
+      return Math.max(COUNTDOWN.MIN_SPOTS, Math.min(COUNTDOWN.START_SPOTS, val));
+    }
+    const spotsEl = document.getElementById("spots");
+    let spots = currentSpots();
+    spotsEl.textContent = spots;
+    setInterval(() => { const v = currentSpots(); if (v !== spots) { spots = v; spotsEl.textContent = v; } }, COUNTDOWN.POLL_MS);
+
+    // ============================================================
+    //  FORM
+    // ============================================================
+    const form = document.getElementById("signup");
+    const emailEl = document.getElementById("email");
+    const phoneEl = document.getElementById("phone");
+    const hpEl = document.getElementById("company");
+    const errorEl = document.getElementById("error");
+    const submitEl = document.getElementById("submit");
+    const confirmationEl = document.getElementById("confirmation");
+    const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+    // Clear the error as soon as the user starts fixing it (no premature errors).
+    emailEl.addEventListener("input", () => { errorEl.textContent = ""; emailEl.classList.remove("invalid"); });
+
+    function fail(msg) {
+      errorEl.textContent = msg;
+      emailEl.classList.add("invalid");
+      emailEl.focus();
+    }
+
+    async function submitSignup(payload) {
+      await fetch(SCRIPT_URL, { method: "POST", headers: { "Content-Type": "text/plain;charset=utf-8" }, body: JSON.stringify(payload) });
+    }
+
+    form.addEventListener("submit", async function (e) {
+      e.preventDefault();
+      errorEl.textContent = "";
+
+      if (hpEl.value.trim() !== "") { showConfirmation(); return; } // honeypot
+
+      const email = emailEl.value.trim();
+      if (!email) { fail("Please add your email so we can send your access."); return; }
+      if (!EMAIL_RE.test(email)) { fail("That email doesn't look right, mind checking it?"); return; }
+
+      const phone = phoneEl.value.replace(/[^\d+()\-\s]/g, "").trim();
+
+      submitEl.disabled = true;
+      const label = submitEl.textContent;
+      submitEl.textContent = "Claiming your spot…";
+      try { await submitSignup({ email, phone, source: SOURCE }); }
+      catch (err) { console.error("HomeCrowd signup POST failed:", err); }
+      submitEl.textContent = label;
+      showConfirmation();
+    });
+
+    function showConfirmation() { form.classList.add("is-hidden"); confirmationEl.classList.add("show"); }
+
+    // ============================================================
+    //  TWEAKS PANEL WIRING (host protocol)
+    // ============================================================
+    (function tweaksPanel() {
+      const panel = document.getElementById("tweaks");
+      const accentWrap = document.getElementById("twAccent");
+      const ov = document.getElementById("twOverlay"), ovVal = document.getElementById("twOvVal");
+      const sp = document.getElementById("twSpeed"), spVal = document.getElementById("twSpeedVal");
+      const flags = document.getElementById("twFlags");
+      const hl = document.getElementById("twHeadline"), hlHl = document.getElementById("twHeadlineHl");
+
+      ACCENTS.forEach(c => {
+        const b = document.createElement("button");
+        b.className = "tw-sw"; b.style.background = c; b.dataset.c = c;
+        b.addEventListener("click", () => { setTweak("accent", c); syncSwatches(); });
+        accentWrap.appendChild(b);
+      });
+      function syncSwatches() { [...accentWrap.children].forEach(b => b.classList.toggle("sel", b.dataset.c === TWEAKS.accent)); }
+
+      function syncControls() {
+        syncSwatches();
+        ov.value = TWEAKS.overlay; ovVal.textContent = Math.round((1 - TWEAKS.overlay) * 100 + 2) + "%";
+        sp.value = TWEAKS.flagSpeed; spVal.textContent = TWEAKS.flagSpeed + "s";
+        flags.checked = TWEAKS.showFlags;
+        hl.value = TWEAKS.headline; hlHl.value = TWEAKS.headlineHighlight;
+      }
+
+      ov.addEventListener("input", () => { setTweak("overlay", parseFloat(ov.value)); ovVal.textContent = Math.round((1 - ov.value) * 100 + 2) + "%"; });
+      sp.addEventListener("input", () => { setTweak("flagSpeed", parseInt(sp.value)); spVal.textContent = sp.value + "s"; });
+      flags.addEventListener("change", () => setTweak("showFlags", flags.checked));
+      hl.addEventListener("input", () => setTweak("headline", hl.value));
+      hlHl.addEventListener("input", () => setTweak("headlineHighlight", hlHl.value));
+
+      document.getElementById("twClose").addEventListener("click", () => {
+        panel.classList.remove("open");
+        window.parent.postMessage({ type: "__edit_mode_dismissed" }, "*");
+      });
+
+      window.addEventListener("message", e => {
+        const t = e && e.data && e.data.type;
+        if (t === "__activate_edit_mode") { syncControls(); panel.classList.add("open"); }
+        else if (t === "__deactivate_edit_mode") panel.classList.remove("open");
+      });
+      window.parent.postMessage({ type: "__edit_mode_available" }, "*");
+    })();
+
+    applyTweaks();
+  </script>
+</body>
+</html>
