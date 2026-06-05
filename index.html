@@ -9,7 +9,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link rel="preconnect" href="https://flagcdn.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Sora:wght@400;500;600;700;800&family=Manrope:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Archivo:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
 
   <style>
     @font-face {
@@ -21,7 +21,9 @@
 
     :root {
       --blue:        #2541E0;
+      --royal:       #2B4CD6;
       --blue-bright: #5C7CFF;
+      --bodyfont:    "Space Grotesk";
       --navy:        #0C1640;
       --ink:         #060A1A;
       --white:       #FFFFFF;
@@ -41,7 +43,7 @@
     html, body { height: 100%; }
 
     body {
-      font-family: "Space Grotesk", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      font-family: var(--bodyfont), -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
       color: var(--white);
       background: var(--navy);
       -webkit-font-smoothing: antialiased;
@@ -73,7 +75,8 @@
     .flagbar::before, .flagbar::after { content: ""; position: absolute; top: 0; bottom: 0; width: 90px; z-index: 2; pointer-events: none; }
     .flagbar::before { left: 0;  background: linear-gradient(90deg,  var(--flag-bg), rgba(238,240,246,0)); }
     .flagbar::after  { right: 0; background: linear-gradient(270deg, var(--flag-bg), rgba(238,240,246,0)); }
-    .flagbar-track { display: flex; align-items: center; gap: 34px; white-space: nowrap; padding-left: 34px; will-change: transform; animation: scrollflags var(--flag-dur) linear infinite; }
+    .flagbar-track { display: flex; align-items: center; white-space: nowrap; will-change: transform; animation: scrollflags var(--flag-dur) linear infinite; }
+    .flag-group { display: flex; align-items: center; gap: 34px; padding-left: 34px; flex: none; }
     .flagbar-track img { height: 17px; width: auto; display: block; border-radius: 2px; box-shadow: 0 0 0 1px rgba(12,22,64,0.12); opacity: 0.92; }
     @keyframes scrollflags { from { transform: translateX(0); } to { transform: translateX(-50%); } }
 
@@ -83,9 +86,12 @@
       background: var(--white); border-bottom: 5px solid var(--blue);
       display: flex; align-items: center;
     }
-    .brandbar-inner { width: 100%; max-width: var(--maxw); height: 100%; margin: 0 auto; padding: 0 24px; display: flex; align-items: center; justify-content: center; }
-    .wordmark { font-family: "Regarn", "Space Grotesk", serif; font-weight: 900; font-size: clamp(1.8rem, 6.5vw, 2.2rem); letter-spacing: -0.005em; line-height: 1; color: var(--blue); }
-    .wordmark .wm-crowd { color: #4360EC; }
+    .brandbar-inner { width: 100%; max-width: var(--maxw); height: 100%; margin: 0 auto; padding: 0 24px; display: flex; align-items: center; justify-content: center; gap: 18px; }
+    .wordmark { font-family: "Regarn", "Space Grotesk", serif; font-weight: 900; font-size: clamp(1.8rem, 6.5vw, 2.2rem); letter-spacing: -0.005em; line-height: 1; color: var(--royal); }
+    .brand-aside { display: none; align-items: center; gap: 12px; }
+    .brand-tag { font-size: 0.82rem; font-weight: 600; letter-spacing: 0.03em; color: #46507A; display: inline-flex; align-items: center; gap: 9px; white-space: nowrap; }
+    .brand-tag::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: var(--royal); flex: none; }
+    .brand-badge { font-size: 0.74rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--royal); background: rgba(43,76,214,0.10); border: 1px solid rgba(43,76,214,0.20); padding: 7px 13px; border-radius: 999px; white-space: nowrap; }
 
     /* body hides flag bar */
     body.no-flags { --flagbar-h: 0px; }
@@ -130,7 +136,7 @@
 
     button.cta {
       width: 100%; min-height: 52px; padding: 14px 20px; margin-top: 2px;
-      font-family: "Space Grotesk", sans-serif; font-size: 1.08rem; font-weight: 700; letter-spacing: 0.01em;
+      font-family: var(--bodyfont), sans-serif; font-size: 1.08rem; font-weight: 700; letter-spacing: 0.01em;
       color: var(--accent-text); background: var(--accent); border: none; border-radius: 9px; cursor: pointer;
       box-shadow: inset 0 -2px 0 rgba(0,0,0,0.18); transition: transform 0.06s ease, filter 0.15s ease;
     }
@@ -149,7 +155,9 @@
 
     /* ===== Desktop two-column ===== */
     @media (min-width: 900px) {
-      .brandbar-inner { justify-content: flex-start; }
+      .brandbar-inner { justify-content: space-between; }
+      body.head-minimal .brandbar-inner { justify-content: flex-start; }
+      body:not(.head-minimal) .brand-aside { display: inline-flex; }
       .wordmark { font-size: 2.2rem; padding-left: 0; }
       .card { max-width: var(--maxw); flex-direction: row; align-items: center; gap: 60px; }
       .hero { flex: 1 1 0; gap: 22px; }
@@ -179,11 +187,9 @@
     #tweaks .tw-sw.sel { border-color: #fff; }
     #tweaks input[type="range"] { width: 100%; accent-color: var(--blue-bright); }
     #tweaks input[type="text"] { width: 100%; height: 34px; padding: 0 10px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.18); background: #080C1C; color: #fff; font: inherit; font-size: 0.84rem; }
+    #tweaks select { width: 100%; height: 34px; padding: 0 8px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.18); background: #080C1C; color: #fff; font: inherit; font-size: 0.84rem; cursor: pointer; }
     #tweaks .tw-toggle { display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 0.8rem; color: rgba(255,255,255,0.85); }
   </style>
-
-  <!-- Vercel Web Analytics -->
-  <script defer src="https://cdn.vercel-insights.com/v1/script.js"></script>
 </head>
 <body>
   <div class="bg-base" aria-hidden="true"></div>
@@ -195,7 +201,10 @@
   <div class="flagbar" aria-hidden="true"><div class="flagbar-track" id="flagtrack"></div></div>
 
   <header class="brandbar">
-    <div class="brandbar-inner"><div class="wordmark" id="wordmark">Home<span class="wm-crowd">Crowd</span></div></div>
+    <div class="brandbar-inner">
+      <div class="wordmark" id="wordmark">HomeCrowd</div>
+      <div class="brand-aside" id="brandAside"></div>
+    </div>
   </header>
 
   <main class="screen">
@@ -243,6 +252,24 @@
         <div class="tw-swatches" id="twAccent"></div>
       </div>
       <div class="tw-row">
+        <span class="tw-label">Body &amp; headline font</span>
+        <select id="twFont">
+          <option value="Space Grotesk">Space Grotesk</option>
+          <option value="Sora">Sora</option>
+          <option value="Manrope">Manrope</option>
+          <option value="Jakarta">Plus Jakarta Sans</option>
+          <option value="Archivo">Archivo</option>
+        </select>
+      </div>
+      <div class="tw-row">
+        <span class="tw-label">Header style</span>
+        <select id="twHeader">
+          <option value="tagline">Tagline</option>
+          <option value="badge">Access badge</option>
+          <option value="minimal">Minimal</option>
+        </select>
+      </div>
+      <div class="tw-row">
         <span class="tw-label"><span>Crowd visibility</span><span id="twOvVal"></span></span>
         <input type="range" id="twOverlay" min="0.4" max="0.98" step="0.02" />
       </div>
@@ -284,14 +311,28 @@
     // ============================================================
     const TWEAKS = /*EDITMODE-BEGIN*/{
       "accent": "#FFC23C",
-      "overlay": 0.88,
-      "flagSpeed": 80,
+      "overlay": 0.96,
+      "flagSpeed": 90,
       "showFlags": true,
+      "bodyFont": "Sora",
+      "headerStyle": "badge",
       "headline": "Find the best venue to watch every match.",
       "headlineHighlight": "Together."
     }/*EDITMODE-END*/;
 
     const ACCENTS = ["#FFC23C", "#1FE3A0", "#FFFFFF", "#19B8FF"];
+    const FONTS = {
+      "Space Grotesk": "'Space Grotesk'",
+      "Sora":          "'Sora'",
+      "Manrope":       "'Manrope'",
+      "Jakarta":       "'Plus Jakarta Sans'",
+      "Archivo":       "'Archivo'"
+    };
+    const HEADER_STYLES = {
+      "minimal": "",
+      "tagline": '<span class="brand-tag">Where your people watch &middot; World Cup 2026</span>',
+      "badge":   '<span class="brand-badge">Free early access</span>'
+    };
     const root = document.documentElement;
 
     function applyTweaks() {
@@ -299,7 +340,12 @@
       root.style.setProperty("--accent-text", "#0C1640");
       root.style.setProperty("--ov", String(TWEAKS.overlay));
       root.style.setProperty("--flag-dur", TWEAKS.flagSpeed + "s");
+      root.style.setProperty("--bodyfont", FONTS[TWEAKS.bodyFont] || FONTS["Space Grotesk"]);
       document.body.classList.toggle("no-flags", !TWEAKS.showFlags);
+      ["head-minimal","head-tagline","head-badge"].forEach(c => document.body.classList.remove(c));
+      document.body.classList.add("head-" + TWEAKS.headerStyle);
+      const aside = document.getElementById("brandAside");
+      if (aside) aside.innerHTML = HEADER_STYLES[TWEAKS.headerStyle] || "";
       document.getElementById("headline").childNodes[0].nodeValue = TWEAKS.headline + " ";
       document.getElementById("headlineHl").textContent = TWEAKS.headlineHighlight;
     }
@@ -316,13 +362,25 @@
     const FLAGS = ["us","mx","ca","ar","br","fr","gb","es","pt","de","nl","it","hr","be","ma","sn","jp","kr","au","co"];
     (function buildFlags() {
       const track = document.getElementById("flagtrack");
-      const add = () => FLAGS.forEach(code => {
-        const img = document.createElement("img");
-        img.src = "https://flagcdn.com/h40/" + code + ".png";
-        img.alt = ""; img.decoding = "async";
-        track.appendChild(img);
-      });
-      add(); add();
+      const makeGroup = () => {
+        const g = document.createElement("div");
+        g.className = "flag-group";
+        // repeat the set enough times that ONE group spans wider than the viewport,
+        // so the -50% loop never reveals empty space on large monitors
+        const reps = Math.max(2, Math.ceil((window.innerWidth * 1.2) / (FLAGS.length * 60)));
+        for (let r = 0; r < reps; r++) {
+          FLAGS.forEach(code => {
+            const img = document.createElement("img");
+            img.src = "https://flagcdn.com/h40/" + code + ".png";
+            img.alt = ""; img.decoding = "async";
+            g.appendChild(img);
+          });
+        }
+        return g;
+      };
+      // two identical groups => translateX(-50%) lands perfectly seam-to-seam
+      track.appendChild(makeGroup());
+      track.appendChild(makeGroup());
     })();
 
     // ============================================================
@@ -425,6 +483,8 @@
       const ov = document.getElementById("twOverlay"), ovVal = document.getElementById("twOvVal");
       const sp = document.getElementById("twSpeed"), spVal = document.getElementById("twSpeedVal");
       const flags = document.getElementById("twFlags");
+      const fontSel = document.getElementById("twFont");
+      const headerSel = document.getElementById("twHeader");
       const hl = document.getElementById("twHeadline"), hlHl = document.getElementById("twHeadlineHl");
 
       ACCENTS.forEach(c => {
@@ -440,12 +500,16 @@
         ov.value = TWEAKS.overlay; ovVal.textContent = Math.round((1 - TWEAKS.overlay) * 100 + 2) + "%";
         sp.value = TWEAKS.flagSpeed; spVal.textContent = TWEAKS.flagSpeed + "s";
         flags.checked = TWEAKS.showFlags;
+        fontSel.value = TWEAKS.bodyFont;
+        headerSel.value = TWEAKS.headerStyle;
         hl.value = TWEAKS.headline; hlHl.value = TWEAKS.headlineHighlight;
       }
 
       ov.addEventListener("input", () => { setTweak("overlay", parseFloat(ov.value)); ovVal.textContent = Math.round((1 - ov.value) * 100 + 2) + "%"; });
       sp.addEventListener("input", () => { setTweak("flagSpeed", parseInt(sp.value)); spVal.textContent = sp.value + "s"; });
       flags.addEventListener("change", () => setTweak("showFlags", flags.checked));
+      fontSel.addEventListener("change", () => setTweak("bodyFont", fontSel.value));
+      headerSel.addEventListener("change", () => setTweak("headerStyle", headerSel.value));
       hl.addEventListener("input", () => setTweak("headline", hl.value));
       hlHl.addEventListener("input", () => setTweak("headlineHighlight", hlHl.value));
 
